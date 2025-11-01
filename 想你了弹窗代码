@@ -1,25 +1,86 @@
 import tkinter as tk
 import random
+import math
+import threading
+import time
+
+
+def heart_function(t, scale=1):  # 优化：增加缩放参数，适配屏幕
+    x = 16 * math.sin(t) ** 3 * scale
+    y = (16 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)) * scale
+    return x, y
+
+
+# 原有create_heart_window函数（用户要求不改，保留但本次逻辑用不到，不影响）
+def create_heart_window(center_x, center_y, size, color, delay):
+    import time
+    time.sleep(delay)
+    root = tk.Tk()
+    width, height = int(size * 1.5), int(size * 1.5)
+    root.geometry(f"{width}x{height}+{int(center_x - width / 2)}+{int(center_y - height / 2)}")
+
 
 messages = [
     ("我想你了!", "pink"),
-    ("别熬夜", "skyblue"),
-    ("每天都要开开心心", "lightyellow")
+    ("我一直都喜欢你", "skyblue"),
+    ("每天都要开开心心", "lightyellow"),
+    ("今天过得开心吗?", "lightpink"),
+    ("记得多喝水！", "lightgreen"),
+    ("天冷了,多穿点衣服", "lightgray"),
+    ("好好学习，累了就休息", "magenta"),
+    ("失败不可怕，可怕的是连尝试都不敢", "lime"),
+    ("期待下次见面", "orange"),
 ]
+
+# 新增：跟踪弹窗顺序索引（用于按顺序分配爱心坐标）
+current_index = 0
+# 新增：计算屏幕中心和爱心缩放因子（适配不同屏幕）
+screen_center_x = None
+screen_center_y = None
+heart_scale = None
+
+# 新增：存储所有创建的弹窗实例
+popup_windows = []
+# 新增：控制循环次数的计数器
+cycle_count = 0
+# 新增：标识是否开始关闭窗口
+start_closing = False
 
 
 def create_single_popup():
+    global current_index, cycle_count, start_closing  # 引用全局变量
     popup = tk.Toplevel(root)
-    popup.title("温馨提示")  # 保留标题
+    popup.title("爱你的陌生人")  # 保留原有标题
 
-    # 随机选择信息和背景色
-    msg, bg_color = random.choice(messages)
-    popup.config(bg=bg_color)  # 弹窗背景与内容色一致
+    # 修改：按照5:20比例弹出浅粉色和深粉色弹窗
+    # 每25个弹窗为一组，其中5个浅粉色，20个深粉色渐变
+    group_index = current_index % 25
 
-    # 标签设置（适配240x50尺寸）
+    if group_index < 5:  # 前5个为浅粉色
+        # 浅粉色背景 (rgb(255,182,193))
+        bg_color = "#ffb6c1"
+    else:  # 后20个为深粉色渐变
+        # 使用更深的粉色到浅粉色的渐变背景色
+        # 从rgb(255,105,180)（热粉色）到rgb(255,182,193)（浅粉色）的渐变
+        # 计算渐变比例（在20个粉色弹窗中的位置），放慢1.85倍
+        pink_index = (group_index - 5) % 20
+        # 调整渐变速度，放慢1.85倍
+        adjusted_ratio = min(pink_index / (19 * 1.85), 1.0)  # 确保比例不超过1.0
+
+        # 计算每个颜色分量 (从热粉色到浅粉色)
+        r = 255  # 红色分量保持最大值
+        g = int(105 + (182 - 105) * adjusted_ratio)  # 绿色分量从105渐变到182
+        b = int(180 + (193 - 180) * adjusted_ratio)  # 蓝色分量从180渐变到193
+
+        # 生成背景色
+        bg_color = f"#{r:02x}{g:02x}{b:02x}"
+
+    popup.config(bg=bg_color)
+
+    # 原有逻辑：标签设置（不修改）
     label = tk.Label(
         popup,
-        text=msg,
+        text=random.choice([msg for msg, _ in messages]),  # 只取消息文本
         bg=bg_color,
         font=("楷体", 16),
         padx=20,
@@ -28,28 +89,89 @@ def create_single_popup():
     )
     label.pack()
 
-    # 固定尺寸（宽度240，高度50）
-    popup.geometry("240x50")
+    # 原有逻辑：固定尺寸（不修改）
+    popup_width = 240
+    popup_height = 50
 
-    # 随机位置（确保在屏幕内）
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    x = random.randint(50, screen_width - 240 - 50)
-    y = random.randint(50, screen_height - 50 - 50)
-    popup.geometry(f"240x50+{x}+{y}")
+    # 核心修改：替换随机位置为「爱心坐标+从左到右顺序」
+    # 1. 计算当前弹窗对应的爱心参数t（t从0到2π，实现从左到右沿爱心轮廓分布）
+    # 修改：弹窗数量减半为150个
+    total_popups = 150  # 减半后的弹窗数量
+    # 修改：调整间距为原来的4倍
+    spacing_factor = 4.0  # 4倍间距
+    t = (current_index % total_popups / total_popups) * 2 * math.pi * spacing_factor  # t逐步递增，从左到右
+
+    # 2. 计算爱心坐标（基于屏幕中心偏移）
+    # 将爱心路径扩大1.1314倍
+    heart_x, heart_y = heart_function(t, heart_scale * 1.1314)
+    # 3. 计算弹窗左上角坐标（让弹窗中心对齐爱心坐标，更规整）
+    popup_x = screen_center_x + heart_x - (popup_width // 2)
+    popup_y = screen_center_y - heart_y - (popup_height // 2)  # y轴反向（屏幕y轴向下）
+    # 4. 确保弹窗在屏幕内（避免超出边界）
+    popup_x = max(200, min(popup_x, screen_center_x * 2 - popup_width - 300))
+    popup_y = max(100, min(popup_y, screen_center_y * 2 - popup_height - 100))
+    # 5. 设置弹窗位置
+    popup.geometry(f"{popup_width}x{popup_height}+{int(popup_x)}+{int(popup_y)}")
+
+    # 将弹窗添加到列表中
+    popup_windows.append(popup)
+
+    # 检查是否完成两个爱心循环
+    if current_index > 0 and current_index % total_popups == 0:
+        cycle_count += 1
+        if cycle_count >= 2:
+            start_closing = True
+
+    # 索引递增，下一个弹窗用下一个爱心坐标
+    current_index += 1
+
+
+def close_old_popups():
+    """逐渐关闭旧弹窗的函数"""
+
+    def safe_destroy():
+        if popup_windows:
+            old_popup = popup_windows.pop(0)
+            try:
+                old_popup.destroy()
+            except:
+                pass  # 窗口可能已经被关闭
+
+    while True:
+        time.sleep(0.05)  # 每50ms检查一次，与创建速度同步
+        if start_closing and popup_windows:
+            # 使用root.after确保在主线程中安全地销毁窗口
+            root.after(0, safe_destroy)
 
 
 def loop_create(count):
+    # 修改：保持减半后的弹窗数量150个
+    adjusted_count = 150  # 减半后的弹窗数量
     if count > 0:
         create_single_popup()
-        # 保持200ms间隔，避免创建过快导致卡顿
-        root.after(200, loop_create, count - 1)
+        # 保持原有50ms间隔
+        root.after(50, loop_create, count - 1 if count <= adjusted_count else count - 1)
     else:
-        print("所有弹窗创建完成（约100个）")
+        # 循环创建新的弹窗
+        create_single_popup()
+        root.after(50, loop_create, adjusted_count)
 
 
 root = tk.Tk()
-root.withdraw()
+root.withdraw()  # 隐藏主窗口
 root.update_idletasks()
-loop_create(100)  # 直接设置为100个弹窗
+
+# 新增：初始化屏幕中心和爱心缩放因子（在主窗口初始化后计算）
+screen_center_x = root.winfo_screenwidth() // 2
+screen_center_y = root.winfo_screenheight() // 2
+# 将爱心整体缩放因子调整为原来的1.1314倍
+heart_scale = min(screen_center_x // 50, screen_center_y // 17) * 1.1314  # 控制爱心大小，适配屏幕
+
+# 启动关闭旧弹窗的线程
+close_thread = threading.Thread(target=close_old_popups, daemon=True)
+close_thread.start()
+
+# 修改：创建减半后的弹窗数量（150个）
+actual_count = 150
+loop_create(actual_count)
 root.mainloop()
