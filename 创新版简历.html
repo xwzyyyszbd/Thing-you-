@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>张峻银 - 前端开发实习生</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        /* 动态背景粒子 */
+        .bg-particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none; overflow: hidden;
+        }
+        .particle {
+            position: absolute; border-radius: 50%; background: rgba(59, 130, 246, 0.15);
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+        .container {
+            position: relative; z-index: 1;
+            max-width: 1200px; margin: 0 auto; padding: 0 20px;
+        }
+        /* 顶部横幅 */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            text-align: center; position: relative;
+        }
+        .hero-content { animation: fadeInUp 1s ease; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hero h1 {
+            font-size: 4rem; font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+        .hero .tagline {
+            font-size: 1.5rem; color: #94a3b8; margin-bottom: 12px;
+        }
+        .hero .contact {
+            font-size: 0.95rem; color: #64748b; margin-bottom: 30px; line-height: 1.8;
+        }
+        .hero .contact a {
+            color: #3b82f6; text-decoration: none; transition: color 0.3s;
+        }
+        .hero .contact a:hover { color: #8b5cf6; }
+        .hero .cta-btn {
+            display: inline-block; padding: 14px 40px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white; text-decoration: none; border-radius: 50px;
+            font-weight: 600; font-size: 1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none; cursor: pointer;
+        }
+        .hero .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+        .scroll-indicator {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+        .scroll-indicator span {
+            display: block; width: 24px; height: 24px;
+            border-bottom: 2px solid #3b82f6; border-right: 2px solid #3b82f6;
+            transform: rotate(45deg); margin: -10px;
+        }
+        /* 通用区块样式 */
+        .section {
+            padding: 80px 0; opacity: 0; transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .section.visible { opacity: 1; transform: translateY(0); }
+        .section-title {
+            font-size: 2rem; font-weight: 700; margin-bottom: 40px;
+            position: relative; display: inline-block;
+        }
+        .section-title::after {
+            content: ''; position: absolute; bottom: -8px; left: 0;
+            width: 60px; height: 4px; border-radius: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+        /* 两栏布局 */
+        .two-col {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+        }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+        /* 卡片样式 */
+        .card {
+            background: rgba(30, 30, 50, 0.8); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px; padding: 30px;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        .card h3 {
+            font-size: 1.2rem; color: #3b82f6; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card h3::before {
+            content: ''; display: inline-block; width: 8px; height: 8px;
+            background: #3b82f6; border-radius: 50%;
+        }
+        /* 技能条 */
+        .skill-item { margin-bottom: 20px; }
+        .skill-header {
+            display: flex; justify-content: space-between; margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        .skill-bar {
+            height: 8px; background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px; overflow: hidden;
+        }
+        .skill-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            width: 0; transition: width 1.5s ease;
+        }
+        /* 证书标签 */
+        .cert-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+        .cert-tag {
+            padding: 8px 18px; background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px; font-size: 0.9rem; color: #93c5fd;
+            transition: all 0.3s;
+        }
+        .cert-tag:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: scale(1.05);
+        }
+        /* 教育背景 */
+        .edu-item {
+            padding: 20px; background: rgba(59, 130, 246, 0.08);
+            border-left: 3px solid #3b82f6; border-radius: 0 12px 12px 0;
+            margin-bottom: 16px;
+        }
+        .edu-item h4 { color: #e2e8f0; margin-bottom: 6px; font-size: 1.1rem; }
+        .edu-item p { color: #94a3b8; font-size: 0.95rem; }
+        /* 项目时间线 */
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 2px; background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+        }
+        .timeline-item {
+            position: relative; margin-bottom: 30px;
+        }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -34px; top: 4px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #3b82f6; border: 2px solid #0a0a1a;
+        }
+        .timeline-item h4 {
+            color: #e2e8f0; font-size: 1.1rem; margin-bottom: 8px;
+        }
+        .timeline-item .label { color: #3b82f6; font-weight: 600; font-size: 0.9rem; }
+        .timeline-item p { color: #94a3b8; font-size: 0.95rem; line-height: 1.7; margin-top: 4px; }
+        /* 自我评价 */
+        .self-intro {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px; padding: 30px;
+        }
+        .self-intro p {
+            color: #cbd5e1; line-height: 1.8; font-size: 1rem;
+        }
+        .self-intro .highlight {
+            color: #3b82f6; font-weight: 600;
+        }
+        /* 页脚 */
+        .footer {
+            text-align: center; padding: 40px 0; color: #475569;
+            font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        /* 导航 */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 16px 40px; display: flex; justify-content: space-between;
+            align-items: center; background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+        .nav .logo {
+            font-size: 1.3rem; font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav ul { list-style: none; display: flex; gap: 30px; }
+        .nav a {
+            color: #94a3b8; text-decoration: none; font-size: 0.95rem;
+            transition: color 0.3s; position: relative;
+        }
+        .nav a:hover { color: #3b82f6; }
+        .nav a::after {
+            content: ''; position: absolute; bottom: -4px; left: 0;
+            width: 0; height: 2px; background: #3b82f6;
+            transition: width 0.3s;
+        }
+        .nav a:hover::after { width: 100%; }
+        @media (max-width: 768px) {
+            .nav { padding: 12px 20px; }
+            .nav ul { gap: 15px; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero .tagline { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- 导航栏 -->
+    <nav class="nav">
+        <div class="logo">&lt;XWZYYYSZBD /&gt;</div>
+        <ul>
+            <li><a href="#home">首页</a></li>
+            <li><a href="#skills">技能</a></li>
+            <li><a href="#project">项目</a></li>
+            <li><a href="#about">关于</a></li>
+        </ul>
+    </nav>
+
+    <!-- 首页横幅 -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>张峻银</h1>
+            <p class="tagline">前端开发实习生</p>
+            <p class="contact">
+                Tel: 182-8413-2884 &nbsp;|&nbsp; Email: a18284132884@outlook.com<br>
+                GitHub: <a href="https://github.com/xwzyyyszbd" target="_blank">github.com/xwzyyyszbd</a>
+            </p>
+            <a href="#skills" class="cta-btn">探索我的技能 ↓</a>
+        </div>
+        <div class="scroll-indicator"><span></span></div>
+    </section>
+
+    <!-- 技能 & 教育 & 证书 -->
+    <section class="section" id="skills">
+        <div class="container">
+            <h2 class="section-title">专业技能</h2>
+            <div class="two-col">
+                <div class="card">
+                    <h3>技术能力</h3>
+                    <div class="skill-item">
+                        <div class="skill-header"><span>HTML5 / CSS3</span><span>90%</span></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="90"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-header"><span>JavaScript</span><span>75%</span></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="75"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-header"><span>Photoshop / Illustrator</span><span>85%</span></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="85"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-header"><span>Java / Python</span><span>65%</span></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="65"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-header"><span>低代码平台</span><span>80%</span></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="80"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-header"><span>Vue.js（学习中）</span><span>40%</span></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="40"></div></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h3>教育背景</h3>
+                        <div class="edu-item">
+                            <h4>湖南民族职业学院</h4>
+                            <p>软件技术专业 | 25软件01班 | 在读</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>荣誉证书</h3>
+                        <div class="cert-tags">
+                            <span class="cert-tag">全国计算机等级考试二级证书</span>
+                            <span class="cert-tag">Java工程师证书</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 项目经历 -->
+    <section class="section" id="project">
+        <div class="container">
+            <h2 class="section-title">项目经历</h2>
+            <div class="card">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>低代码业务展示系统 <span class="label">| 项目负责人</span></h4>
+                        <p><span class="label">项目背景：</span>课程实训项目，需在限定周期内交付一套可演示的业务展示系统，涵盖首页、列表页、详情页等共 8 个页面</p>
+                        <p><span class="label">前端开发：</span>使用 HTML5 + CSS3 完成 8 个页面的静态布局与样式开发，通过 Flex 布局实现多端适配，保证主流浏览器下布局一致，累计修复 12 处样式与功能问题</p>
+                        <p><span class="label">UI 还原：</span>基于 Photoshop、Illustrator 输出 8 套页面设计稿并进行 1:1 像素级还原，统一配色、字体与组件规范，确保设计稿到页面的高保真转化</p>
+                        <p><span class="label">功能实现：</span>基于低代码平台配置业务模块与数据绑定，配合 Java / Python 完成基础数据交互与调试；组织每周进度同步，统筹 4 人小组分工与排期</p>
+                        <p><span class="label">项目成果：</span>项目按期交付并通过验收，实训评分 86 分，作品在班级公开展示并获任课教师认可；沉淀了页面组件与样式复用规范，后续组员可直接套用；页面加载体验流畅，移动端适配比例达 100%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 自我评价 -->
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title">自我评价</h2>
+            <div class="self-intro">
+                <p>
+                    <span class="highlight">软件技术专业在读</span>。兼具 UI 设计与前端开发能力，独立完成 8 页高保真页面还原，具备前后端联调经验。做事严谨细致，学习能力强，可快速适配前端开发岗位需求。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <div class="footer">
+        <p>&copy; 2026 张峻银 | 前端开发实习生 | GitHub: xwzyyyszbd/Thing-you-</p>
+    </div>
+
+    <script>
+        // 生成背景粒子
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            const size = Math.random() * 6 + 2;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            particle.style.animationDelay = (Math.random() * 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // 滚动显示动画
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // 触发技能条动画
+                    entry.target.querySelectorAll('.skill-fill').forEach(bar => {
+                        bar.style.width = bar.dataset.width + '%';
+                    });
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.section').forEach(section => observer.observe(section));
+
+        // 导航平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
